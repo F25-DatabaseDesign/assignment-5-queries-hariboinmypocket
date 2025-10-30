@@ -1,0 +1,161 @@
+1) How many containers of antibiotics are currently available?
+Query:
+SELECT quantityOnHand 
+FROM item 
+WHERE itemDescription LIKE '%antibiotics%';
+
+Answer: 100
+
+2) Which volunteer(s), if any, have phone numbers that do not start with the number 2 and whose last name is not Jones.
+Query:
+SELECT volunteerName
+FROM volunteer 
+WHERE volunteerName NOT LIKE '% Jones' 
+AND volunteerTelephone NOT LIKE '2%';
+
+Answer: Gene Lewin
+
+3) Which volunteer(s) are working on transporting tasks?
+Query:
+SELECT DISTINCT v.volunteername
+FROM volunteer AS v
+JOIN assignment AS a ON v.volunteerId = a.volunteerId
+JOIN task AS t ON t.taskCode = a.taskCode
+JOIN task_type AS tt ON t.taskTypeId = tt.taskTypeId
+WHERE tt.taskTypeName = 'transporting';
+
+Answer: George Brewer
+
+4) Which task(s) have yet to be assigned to any volunteers?
+Query:
+SELECT t.taskDescription 
+FROM task AS t
+LEFT JOIN assignment AS a ON a.taskCode = t.taskCode
+WHERE a.taskCode IS NULL;
+
+Answer: Prepare 100 food packages, Take packages to the warehouse
+
+5) Which type(s) of package contain some kind of bottle?
+Query:
+SELECT DISTINCT pt.packageTypeName
+FROM item AS i
+JOIN package_contents AS pc ON pc.itemId = i.itemId
+JOIN package AS p ON pc.packageId = p.packageId
+JOIN package_type AS pt ON p.packageTypeId = pt.packageTypeId
+WHERE i.itemDescription LIKE '%bottle%';
+
+Answer: food and water
+
+6) Which items, if any, are not in the packages?
+Query:
+SELECT i.itemDescription
+FROM item AS i
+LEFT JOIN package_contents AS pc ON pc.itemId = i.itemId
+WHERE pc.itemId IS NULL;
+
+Answer: bottle of antibiotics, bottle of aspirin, flashlight, pack of bandages
+
+7) Which task(s) are assigned to volunteer(s) that live in New Jersey (NJ)?
+Query:
+SELECT DISTINCT t.taskDescription
+FROM task AS t
+JOIN assignment AS a ON t.taskCode = a.taskCode
+JOIN volunteer AS v ON v.volunteerId = a.volunteerId
+WHERE v.volunteerAddress LIKE '% NJ';
+
+Answer: Prepare 20 children's packages, Prepare 100 water packages, Prepare 5,000 packages
+
+8) Which volunteers began their assignments in the first half of 2021?
+Query:
+SELECT DISTINCT v.volunteerName
+FROM volunteer AS v
+JOIN assignment AS a ON v.volunteerId = a.volunteerId
+WHERE a.startDateTime >= '2021-01-01 00:00:00' 
+AND a.startDateTime < '2021-07-01 00:00:00';
+
+Answer: Joan Simmons, Chris Jordan
+
+9) Which volunteers have been assigned to tasks that include packing spam?
+Query:
+SELECT DISTINCT v.volunteerName
+FROM volunteer AS v
+JOIN assignment AS a ON v.volunteerId = a.volunteerId
+JOIN package AS p ON a.taskCode = p.taskCode
+JOIN package_contents AS pc ON p.packageId = pc.packageId
+JOIN item AS i ON i.itemId = pc.itemId
+WHERE i.itemDescription LIKE '%spam%';
+
+Answer: Julie White, Gerry Banks
+
+10) Which item(s) (if any) have a total value of exactly $100 in one package?
+Query:
+SELECT DISTINCT i.itemDescription
+FROM item AS i
+JOIN package_contents AS pc ON pc.itemId = i.itemId
+WHERE i.itemValue * pc.itemQuantity = 100;
+
+Answer: Baby formula
+
+11) How many volunteers are assigned to tasks with each different status (DESC)?
+Query:
+SELECT ts.taskStatusName AS tsname, COUNT(DISTINCT a.volunteerId) AS num
+FROM task_status AS ts
+JOIN task AS t ON t.taskStatusId = ts.taskStatusId
+JOIN assignment AS a ON a.taskCode = t.taskCode
+GROUP BY ts.taskStatusName
+ORDER BY num DESC;
+
+Answer: tsname    num
+        open      4
+        closed    3
+        ongoing   2
+        pending   1
+
+12) Which task creates the heaviest set of packages and what is the weight?
+Query:
+SELECT t.taskCode AS tcode, SUM(p.packageWeight) AS weight
+FROM task AS t
+JOIN package AS p ON p.taskCode = t.taskCode
+GROUP BY tcode
+ORDER BY weight DESC
+LIMIT 1;
+
+Answer: tcode     weight
+        106       308
+
+13) How many tasks are there that do not have a type of "packing"?
+Query:
+SELECT COUNT(*) AS num
+FROM task AS t
+JOIN task_type AS tt ON t.taskTypeId = tt.taskTypeId
+WHERE tt.taskTypeName <> 'packing';
+
+Answer: 3
+
+14) Of those items that have been packed, which item (or items) were touched by fewer than 3 volunteers?
+Query:
+SELECT i.itemDescription
+FROM item AS i
+JOIN package_contents AS pc ON pc.itemId = i.itemId
+JOIN package AS p ON p.packageId = pc.packageId
+JOIN assignment AS a ON a.taskCode = p.taskCode
+GROUP BY i.itemId
+HAVING COUNT(DISTINCT a.volunteerId) < 3;
+
+Answer: can of spam, dried fruit, tent, men's coat, women's coat, sleeping bag
+
+15) Which packages have a total value of more than 100? Show the packageIds and their values sorted from lowest to highest.
+Query:
+SELECT pc.packageId, SUM(i.itemValue * pc.itemQuantity) AS total_value
+FROM package_contents AS pc
+JOIN item AS i ON pc.itemId = i.itemId
+GROUP BY pc.packageId
+HAVING total_value > 100
+ORDER BY total_value ASC;
+
+Answer: packageId     total_value
+        6             150
+        2             151
+        4             350
+        10            750
+        5             1420
