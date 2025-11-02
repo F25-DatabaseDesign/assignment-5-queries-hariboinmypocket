@@ -143,6 +143,7 @@ GROUP BY i.itemId
 HAVING COUNT(DISTINCT a.volunteerId) < 3;
 
 Answer: can of spam, dried fruit, tent, men's coat, women's coat, sleeping bag
+Assumption: The items listed in the 'package_contents' table are packed by default, regardless of the task status.
 
 15) Which packages have a total value of more than 100? Show the packageIds and their values sorted from lowest to highest.
 Query:
